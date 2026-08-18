@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drinking Day Tracker</title>
+<link rel="icon" href="data:,">
+<style>
+  html, body { margin: 0; padding: 0; background: #14171c; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<style>
+  #root {
+    --ink: #14171c;
+    --panel: #1c2129;
+    --panel-raised: #232935;
+    --line: #2c3340;
+    --text: #e7e9ed;
+    --text-dim: #8a909c;
+    --ok: #4c8c6b;
+    --ok-dim: #2e4d3d;
+    --caution: #a8583d;
+    --caution-dim: #4a3128;
+    --font-display: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    background: var(--ink);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    padding: 28px 16px 60px;
+    box-sizing: border-box;
+  }
+
+  #root * { box-sizing: border-box; }
+
+  .wrap {
+    max-width: 460px;
+    margin: 0 auto;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 26px;
+    margin: 0 0 4px;
+    letter-spacing: 0.01em;
+  }
+
+  .rule-line {
+    color: var(--text-dim);
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .status-card {
+    text-align: center;
+    padding: 26px 20px;
+  }
+
+  .status-word {
+    font-family: var(--font-display);
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .status-word.ok { color: var(--ok); }
+  .status-word.caution { color: var(--caution); }
+
+  .status-sub {
+    color: var(--text-dim);
+    font-size: 13.5px;
+    line-height: 1.5;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .meter-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    flex: 1;
+    height: 30px;
+    border-radius: 7px;
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    position: relative;
+  }
+
+  .dot.drank {
+    background: var(--caution-dim);
+    border-color: var(--caution);
+    color: var(--text);
+  }
+
+  .dot.today {
+    box-shadow: 0 0 0 1px var(--text-dim);
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .stat {
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 11.5px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .log-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  button {
+    font-family: var(--font-body);
+    font-size: 14px;
+    border-radius: 10px;
+    padding: 13px 14px;
+    border: 1px solid var(--line);
+    background: var(--panel-raised);
+    color: var(--text);
+    cursor: pointer;
+    flex: 1;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  button:hover { background: #29303d; }
+
+  button.active-clean {
+    background: var(--ok-dim);
+    border-color: var(--ok);
+  }
+
+  button.active-drank {
+    background: var(--caution-dim);
+    border-color: var(--caution);
+  }
+
+  .today-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .history-title {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .history-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 2px;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .history-row:last-child { border-bottom: none; }
+
+  .history-date { color: var(--text-dim); }
+
+  .history-mark {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 100px;
+  }
+
+  .history-mark.drank {
+    background: var(--caution-dim);
+    color: #d69a83;
+  }
+
+  .history-mark.clean {
+    background: var(--ok-dim);
+    color: #8fbfa4;
+  }
+
+  .footnote {
+    color: var(--text-dim);
+    font-size: 12px;
+    text-align: center;
+    margin-top: 20px;
+    line-height: 1.6;
+  }
+
+  .loading {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 40px 0;
+    font-size: 13px;
+  }
+
+  .savings-amount {
+    font-family: var(--font-display);
+    font-size: 34px;
+    color: var(--ok);
+  }
+
+  .savings-sub {
+    color: var(--text-dim);
+    font-size: 12.5px;
+    margin-top: 4px;
+  }
+
+  .cost-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .cost-input-row input {
+    width: 70px;
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 7px 9px;
+    font-size: 13.5px;
+    font-family: var(--font-body);
+  }
+
+  .cost-input-row input:focus {
+    outline: none;
+    border-color: var(--ok);
+  }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+const { useState, useEffect, useCallback } = React;
+const h = React.createElement;
+
+const STORAGE_KEY = 'entries';
+const COST_KEY = 'cost-per-occasion';
+const DEFAULT_COST = 40;
+// Jack confirmed ~$40/day was his typical spend while drinking daily.
+
+function isoDate(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+function daysAgo(n) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - n);
+  return d;
+}
+
+function formatShort(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function App() {
+  const [entries, setEntries] = useState(null);
+  const [costPerOccasion, setCostPerOccasion] = useState(DEFAULT_COST);
+  const [costInput, setCostInput] = useState(String(DEFAULT_COST));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const todayIso = isoDate(new Date());
+
+  useEffect(() => {
+    let loadedEntries = {};
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      loadedEntries = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      loadedEntries = {};
+    }
+
+    // Backfill: sober month started Aug 3, drinking day on Aug 16.
+    // Only fills in days that aren't already logged — never overwrites
+    // anything entered directly.
+    const seed = { ...loadedEntries };
+    const start = new Date('2026-08-03T00:00:00');
+    const end = new Date();
+    end.setHours(0, 0, 0, 0);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const iso = isoDate(d);
+      if (!(iso in seed)) seed[iso] = false;
+    }
+    seed['2026-08-16'] = true;
+
+    setEntries(seed);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
+    } catch (e) {
+      setError(true);
+    }
+
+    try {
+      const rawCost = localStorage.getItem(COST_KEY);
+      if (rawCost) {
+        const val = JSON.parse(rawCost);
+        setCostPerOccasion(val);
+        setCostInput(String(val));
+      }
+    } catch (e) {
+      // no cost saved yet, keep default
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const persist = useCallback((next) => {
+    setEntries(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch (e) {
+      setError(true);
+    }
+  }, []);
+
+  const persistCost = useCallback((val) => {
+    setCostPerOccasion(val);
+    try {
+      localStorage.setItem(COST_KEY, JSON.stringify(val));
+    } catch (e) {
+      setError(true);
+    }
+  }, []);
+
+  const handleCostBlur = () => {
+    const parsed = parseFloat(costInput);
+    if (!isNaN(parsed) && parsed >= 0) {
+      persistCost(parsed);
+      setCostInput(String(parsed));
+    } else {
+      setCostInput(String(costPerOccasion));
+    }
+  };
+
+  const setDay = (iso, drank) => {
+    const next = { ...entries, [iso]: drank };
+    persist(next);
+  };
+
+  if (loading || entries === null) {
+    return h('div', { className: 'loading' }, 'Loading your log…');
+  }
+
+  const last7 = [];
+  for (let i = 6; i >= 0; i--) {
+    last7.push(isoDate(daysAgo(i)));
+  }
+
+  const last7DrinkCount = last7.filter((iso) => entries[iso]).length;
+
+  const yesterdayIso = isoDate(daysAgo(1));
+  const drankYesterday = !!entries[yesterdayIso];
+  const drankToday = !!entries[todayIso];
+
+  const wouldBreakConsecutive = drankYesterday && !drankToday;
+  const last6ExcludingToday = last7.filter((iso) => iso !== todayIso && entries[iso]).length;
+  const wouldBreakWindow = last6ExcludingToday >= 2 && !drankToday;
+
+  let statusWord, statusSub, statusClass;
+  if (drankToday) {
+    statusWord = 'Logged as a drinking day';
+    statusSub = 'Today is already marked. You can change it below if that was a mistake.';
+    statusClass = 'caution';
+  } else if (wouldBreakConsecutive) {
+    statusWord = 'Today would break the rule';
+    statusSub = 'You drank yesterday. A drink today would break the no-consecutive-days rule.';
+    statusClass = 'caution';
+  } else if (wouldBreakWindow) {
+    statusWord = 'Today would break the rule';
+    statusSub = "You've already had 2 drinking days in the last 7. A drink today would break the max-2-in-7 rule.";
+    statusClass = 'caution';
+  } else {
+    statusWord = 'Within the rules';
+    statusSub = 'Drinking today would not break either rule, based on the last 7 days.';
+    statusClass = 'ok';
+  }
+
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const iso = isoDate(daysAgo(i));
+    if (entries[iso]) break;
+    streak++;
+  }
+
+  const soberDaysLogged = Object.values(entries).filter((v) => v === false).length;
+  const totalSaved = soberDaysLogged * costPerOccasion;
+
+  const historyDays = [];
+  for (let i = 0; i < 14; i++) {
+    historyDays.push(isoDate(daysAgo(i)));
+  }
+
+  return h('div', { className: 'wrap' },
+    h('div', { className: 'eyebrow' }, 'Drinking day tracker'),
+    h('h1', null, 'No two in a row. No more than two in seven.'),
+    h('div', { className: 'rule-line' },
+      'A hard structural check, not a plan for what to drink or when — just whether today would break the rule.'
+    ),
+
+    h('div', { className: 'card status-card' },
+      h('div', { className: `status-word ${statusClass}` }, statusWord),
+      h('div', { className: 'status-sub' }, statusSub)
+    ),
+
+    h('div', { className: 'card' },
+      h('div', { className: 'meter-label' }, 'Last 7 days'),
+      h('div', { className: 'dots' },
+        last7.map((iso) =>
+          h('div', {
+            key: iso,
+            className: `dot ${entries[iso] ? 'drank' : ''} ${iso === todayIso ? 'today' : ''}`,
+            title: formatShort(iso)
+          }, new Date(iso + 'T00:00:00').getDate())
+        )
+      ),
+      h('div', { className: 'stat-grid' },
+        h('div', { className: 'stat' },
+          h('div', { className: 'stat-num' }, `${last7DrinkCount} / 7`),
+          h('div', { className: 'stat-label' }, 'Drinking days, last 7')
+        ),
+        h('div', { className: 'stat' },
+          h('div', { className: 'stat-num' }, String(streak)),
+          h('div', { className: 'stat-label' }, 'Current sober streak')
+        )
+      )
+    ),
+
+    h('div', { className: 'card' },
+      h('div', { className: 'meter-label' }, 'Money saved'),
+      h('div', { className: 'savings-amount' },
+        `$${totalSaved.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+      ),
+      h('div', { className: 'savings-sub' },
+        `${soberDaysLogged} sober day${soberDaysLogged === 1 ? '' : 's'} logged × $${costPerOccasion} per drinking occasion`
+      ),
+      h('div', { className: 'cost-input-row' },
+        h('span', null, 'Cost per drinking occasion: $'),
+        h('input', {
+          type: 'number',
+          min: '0',
+          step: '1',
+          value: costInput,
+          onChange: (e) => setCostInput(e.target.value),
+          onBlur: handleCostBlur
+        })
+      )
+    ),
+
+    h('div', { className: 'card' },
+      h('div', { className: 'today-label' }, `Today — ${formatShort(todayIso)}`),
+      h('div', { className: 'log-buttons' },
+        h('button', {
+          className: !drankToday ? 'active-clean' : '',
+          onClick: () => setDay(todayIso, false)
+        }, 'No drink today'),
+        h('button', {
+          className: drankToday ? 'active-drank' : '',
+          onClick: () => setDay(todayIso, true)
+        }, 'Had a drink today')
+      )
+    ),
+
+    h('div', { className: 'card' },
+      h('div', { className: 'history-title' }, 'Last 14 days'),
+      h('div', { className: 'history-list' },
+        historyDays.map((iso) => {
+          let mark;
+          if (entries[iso] === undefined) {
+            mark = h('span', { className: 'history-mark', style: { color: 'var(--text-dim)' } }, 'not logged');
+          } else if (entries[iso]) {
+            mark = h('span', { className: 'history-mark drank' }, 'drank');
+          } else {
+            mark = h('span', { className: 'history-mark clean' }, 'no drink');
+          }
+          return h('div', { className: 'history-row', key: iso },
+            h('span', { className: 'history-date' }, formatShort(iso)),
+            mark
+          );
+        })
+      )
+    ),
+
+    h('div', { className: 'footnote' },
+      `Saved on this device only.${error ? ' Last change may not have saved — check your connection.' : ''}`
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>
